@@ -60,7 +60,7 @@ const Onboarding = ({ user }) => {
         });
         
         try {
-            const { data, status } = await axios.post("/api/onboarding", reqBody);
+            const { status } = await axios.post("/api/onboarding", reqBody);
             
             if (status === 200) {
                 history.push("/");
