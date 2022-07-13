@@ -89,4 +89,8 @@ User.beforeBulkCreate((users) => {
   users.forEach(setSaltAndPassword);
 });
 
+User.getDataType = (prop) => {
+  return User.tableAttributes[prop].type.constructor.key;
+};
+
 module.exports = User;

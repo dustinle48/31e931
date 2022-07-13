@@ -4,6 +4,7 @@ import { Route, Switch, withRouter } from "react-router-dom";
 
 import Signup from "./Signup.js";
 import Login from "./Login.js";
+import Onboarding from "./onboarding.js";
 import { SnackbarError, Home } from "./components";
 
 const Routes = (props) => {
@@ -101,15 +102,13 @@ const Routes = (props) => {
           render={() => <Signup user={user} register={register} />}
         />
         <Route
+          path="/onboarding"
+          render={(props) => <Onboarding user={user} />}
+        />
+        <Route
           exact
           path="/"
-          render={(props) =>
-            user?.id ? (
-              <Home user={user} logout={logout} />
-            ) : (
-              <Signup user={user} register={register} />
-            )
-          }
+          render={(props) => <Home user={user} logout={logout} />}
         />
         <Route
           path="/home"
