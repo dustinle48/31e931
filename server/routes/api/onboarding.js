@@ -59,6 +59,10 @@ const getOnboarding = async (req, res, next) => {
 };
 
 const postOnboarding = async (req, res, next) => {
+  const { steps } = req.body;
+  const flatSteps = steps.flat();
+  const requiredFields = STEPS.flat().filter((step) => step.required);
+
   try {
     if (!req.user) {
       return res.sendStatus(401);
@@ -72,43 +76,44 @@ const postOnboarding = async (req, res, next) => {
       },
     })
 
-    const { steps } = req.body;
-
-    const onboardingData = {};
-    const flatSteps = steps.flat();
+    if (user.dataValues.completedOnboarding) {
+      return res.status(423).json({ error: "You can only set your onboarding information once." });
+    }
 
     for (const field of flatSteps) {
       if (Array.isArray(field)) {
-        //check if steps input data is a 2 dimensional array
         return res.status(409).json({ error: "Wrong steps data types." });
       } else if (JSON.stringify(Object.getOwnPropertyNames(field)) !== JSON.stringify(["name","value"]) && JSON.stringify(Object.getOwnPropertyNames(field)) !== JSON.stringify(["value","name"])) {
-        //check if input data only has name and value field
         return res.status(409).json({ error: "Data input should only has name and value." });
       } else if (!User.tableAttributes.hasOwnProperty(field.name)) {
-        //check if each field in req body matches with User model
         return res.status(409).json({ error: `Invalid field at ${field.name}` });
       } else if (typeof field.value !== (User.getDataType(field.name)).toLowerCase()) {
-        //check if each field in req body has the right data type.
         return res.status(409).json({ error: `Wrong data type at ${field.name}` });
       } else {
-        onboardingData[field.name] = field.value;
+        for (let i = 0; i < requiredFields.length; i++) {
+          if (requiredFields[i].name === field.name) {
+            requiredFields.splice(i,1);
+          }
+        }
+        
+        user.set({
+          [field.name] : field.value
+        })
       }
     }
 
-    if (user.dataValues.completedOnboarding) {
-      //user can only set their onboarding information once
-      return res.status(403).json({ error: "You can only set your onboarding information once." });
+    if (requiredFields.length > 0) {
+      const missing = [];
+      requiredFields.forEach(field => missing.push(field.name));
+      return res.status(400).json({ error: `Missing ${missing} in onboarding form.`})
     }
 
-    user.set({
-      firstName: onboardingData.firstName,
-      lastName: onboardingData.lastName,
-      country: onboardingData.country,
-      bio: onboardingData.bio,
-      receiveNotifications: onboardingData.receiveNotifications,
-      receiveUpdates: onboardingData.receiveUpdates,
-      completedOnboarding: onboardingData.completedOnboarding || false,
-    })
+    const checkCompletedOnboarding = Object.values(user.dataValues).some(field => field === null);
+    if (checkCompletedOnboarding === false) {
+      user.set({
+        completedOnboarding: true
+      })
+    }
 
     await user.save();
 
