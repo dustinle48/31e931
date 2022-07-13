@@ -81,7 +81,7 @@ const Onboarding = ({ user }) => {
             const { data } = await axios.get("/api/onboarding");
             setSteps([...data.steps]);
 
-            let newFormData = {}
+            const newFormData = {}
             data.steps.flat().forEach((step) => {
                 if(step.type === "yes-no") {
                     newFormData[step.name] = false
@@ -102,7 +102,7 @@ const Onboarding = ({ user }) => {
                 <Stepper className={classes.stepper} activeStep={activeStep}>
                     {steps?.map((step,index) => {
                         return (
-                            <Step key={index}>
+                            <Step>
                                 <StepLabel>Step {index + 1}</StepLabel>
                             </Step>
                         );
